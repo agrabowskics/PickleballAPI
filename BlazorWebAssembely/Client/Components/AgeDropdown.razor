@@ -1,0 +1,46 @@
+﻿<style>
+    .dropdown-scrollable {
+        max-height: 150px;
+        overflow-y: auto;
+    }
+</style>
+
+<div class="dropdown" style="display:inline-block">
+    <button class="btn btn-secondary dropdown-toggle" type="button" @onclick=ToggleShow @onfocusout=OutFocus data-bs-toggle="dropdown" aria-expanded="false">
+        @(Value == 0 ? "Age" : Value)
+    </button>
+    <ul class="dropdown-menu dropdown-scrollable @(_show ? "show" : "")">
+        <li><Button class="dropdown-item" @onclick="() => SetDropdownValue(0)">Age</Button></li>
+
+        @for (var x = 18; x <= 100; x++)
+        {
+            var buttonNumber = x;
+            <li><button class="dropdown-item" @onclick="() => SetDropdownValue(buttonNumber)">@x</button></li>
+        }
+    </ul>
+</div>
+
+@code {
+    private bool _show;
+    private void ToggleShow() => _show = !_show;
+
+    [Parameter]
+    public int Value { get; set; }
+
+    [Parameter]
+    public EventCallback<int> ValueChanged { get; set; }
+
+    private async Task OutFocus()
+    {
+
+        await Task.Delay(200);
+        _show = false;
+    }
+
+    private async void SetDropdownValue(int x)
+    {
+        Value = x;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+}

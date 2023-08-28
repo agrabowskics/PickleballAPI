@@ -1,0 +1,170 @@
+﻿@using BlazorWebAssembely.Shared
+@using Microsoft.EntityFrameworkCore
+@inject IPlayersService PlayersService
+
+<div class="container">
+    @if (_players == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                <div class="input-group mb-3">
+                    <button class="btn btn-outline-secondary" type="button" id="button-addon1">
+                        <span class="oi oi-magnifying-glass"></span>
+                    </button>
+                    <input type="search" class="form-control" placeholder="Search for a player" @bind-value="SearchText" @bind-value:event="oninput">
+                </div>
+            </div>
+            <div class="col">
+                <button class="btn btn-outline-secondary" type="button" id="button-addon1" @onclick="() => ChangePage(false, ViewAllPlayers)">
+                    <span class="oi oi-arrow-left"></span>
+                </button>
+
+                <button class="btn btn-outline-secondary" type="button" id="button-addon1" @onclick="() => ChangePage(true, ViewAllPlayers)">
+                    <span class="oi oi-arrow-right"></span>
+                </button>
+            </div>
+            <div class="col">
+                <AgeDropdownRange @bind-AgeRange=AgeRange></AgeDropdownRange>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <table class="table table-striped table-dark">
+                    <thead>
+                        <tr class="text-center">
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Gender</th>
+                            <th>Age</th>
+                            <th>Rating</th>
+                            <th>State</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var player in _players)
+                        {
+                            <tr>
+                                <td width="20%">@player.FirstName</td>
+                                <td>@player.LastName</td>
+                                <td class="text-center" width="5%">@player.Gender</td>
+                                <td class="text-center" width="5%">@player.Age</td>
+                                <td class="text-center" width="10%">
+                                    @if (player.Rating != null)
+                                    {
+                                        <div>@player.Rating</div>
+                                    }
+                                    else
+                                    {
+                                        <div>-</div>
+                                    }
+                                </td>
+                                <td class="text-center" width="5%">@player.State</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <nav class="page">
+                <ul class="pagination">
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _show = false;
+    private void ToggleDropDown() => this._show = !this._show;
+    private int _page = 0;
+    private List<Player> _players = new();
+    private string _searchText = "";
+    private List<int> _ageRange = new List<int>{0, 0};
+
+    private List<int> AgeRange
+    {
+        get { return _ageRange; }
+        set
+        {
+            _ageRange = value;
+            SearchPlayersAge(value);
+        }
+    }
+
+    private int page
+    {
+        get { return _page; }
+        set
+        {
+            if (value < 0)
+            {
+                _page = 0;
+                return;
+            }
+
+            _page = value;
+        }
+    }
+
+    protected string SearchText
+    {
+        get { return _searchText; }
+        set
+        {
+            _searchText = value;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        ChangePage(false, ViewAllPlayers);
+    }
+
+    protected async void SearchPlayersAge(List<int> ageRange)
+    {
+        if (ageRange[0] != 0 && ageRange[1] == 0)
+        {
+            var response = await PlayersService.SearchPlayersAgeAsync(ageRange[0], ageRange[0], page);
+            _players = response.Players;
+
+            StateHasChanged();
+            return;
+        }
+        else if (ageRange[0] != 0 && ageRange[1] != 0)
+        {
+            var response = await PlayersService.SearchPlayersAgeAsync(ageRange[0], ageRange[1], page);
+            _players = response.Players;
+
+            StateHasChanged();
+            return;
+        }
+
+        ViewAllPlayers();
+    }
+
+    protected async void ViewAllPlayers()
+    {
+        var response = await PlayersService.GetPlayersAsync(page);
+        _players = response.Players;
+        page = response.CurrentPage;
+
+        StateHasChanged();
+    }
+
+    protected void ChangePage(bool isRight, Delegate f)
+    {
+        page += isRight ? 1 : -1;
+
+        f.DynamicInvoke();
+    }
+}

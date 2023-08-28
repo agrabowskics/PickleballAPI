@@ -1,0 +1,42 @@
+﻿<AgeDropdown @bind-Value=age1></AgeDropdown>
+<span style="font-size:25px">-</span>
+<AgeDropdown @bind-Value=age2></AgeDropdown>
+
+@code {
+    private int _age1;
+    private int _age2;
+
+    private int age1
+    {
+        get { return _age1; }
+        set
+        {
+            _age1 = value;
+            AgeRange[0] = value;
+            SetDropdownValue();
+        }
+    }
+
+    private int age2 
+    {
+        get { return _age2; }
+        set
+        {
+            _age2 = value;
+            AgeRange[1] = value;
+            SetDropdownValue();
+        }
+    }
+
+    [Parameter]
+    public List<int> AgeRange { get; set; } = new List<int> {0, 0};
+
+    [Parameter]
+    public EventCallback<List<int>> AgeRangeChanged { get; set; }
+
+    private async void SetDropdownValue()
+    {
+        await AgeRangeChanged.InvokeAsync(AgeRange);
+    }
+
+}
